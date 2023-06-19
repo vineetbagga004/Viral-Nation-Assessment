@@ -1,28 +1,33 @@
 import { ApolloServer } from "@apollo/server";
-
+import "reflect-metadata";
 import { startStandaloneServer } from "@apollo/server/standalone";
+import { PrismaClient } from "@prisma/client";
+import dotenv from "dotenv";
+import { typeDefs } from "../graphql/typeDefs.js";
+import { resolvers } from "../graphql/resolvers.js";
+import { getUserIdByToken } from "../utils/utils.js";
 
-import { makeExecutableSchema } from "@graphql-tools/schema";
-import {typeDefs} from '../data/typeDefs';
-import {resolvers} from '../data/resolvers';
+dotenv.config();
 
-const schema = makeExecutableSchema({
-  resolvers,
-  typeDefs,
-});
+const prisma = new PrismaClient();
+
+const PORT = parseInt(process.env.PORT) || 5000;
 
 const server = new ApolloServer({
-  schema,
+  typeDefs,
+  resolvers,
+  includeStacktraceInErrorResponses: false,
+  introspection: true,
 });
 
-const startServer = async () => {
-  const { url } = await startStandaloneServer(server, {
-
-
-    listen: { port: 4000 },
-  });
-
-  console.log(`🚀  Server ready at: ${url}`);
-};
-
-startServer();
+const { url } = await startStandaloneServer(server, {
+  context: async ({ req }) => {
+    let userId = null;
+    userId = await getUserIdByToken(req, userId);
+    return { prisma, userId };
+  },
+  listen: {
+    port: PORT,
+  },
+});
+console.log(`🚀  Server ready at: ${url}`);

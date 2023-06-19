@@ -1,23 +1,28 @@
 datasource db {
-    provider = "postgresql"
-    url      = env("DATABASE_URL")
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
 }
 
 generator client {
-    provider = "prisma-client-js"
+  provider = "prisma-client-js"
 }
 
 //Here is a declaration of user Table and it properties 
 //configurations. 
 model User {
-    id       String    @id @unique @default(uuid()) @db.Uuid
-    email    String @unique
-    password String
+  id       Int     @id @unique @default(autoincrement())
+  userName String  @unique
+  email    String  @unique
+  password String
+  movies   Movie[]
 }
 
 model Movie {
-    id           String    @id @unique @default(uuid()) @db.Uuid
-    movieName    String
-    description  String
-    directorName String
+  id           Int      @id @unique @default(autoincrement())
+  movieName    String
+  description  String
+  directorName String
+  releaseDate  DateTime @db.Date
+  createdBy    User     @relation(fields: [createdById], references: [id])
+  createdById  Int
 }
